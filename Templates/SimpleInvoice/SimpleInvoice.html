@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<style>
+    html {
+        font-family: Montserrat;
+    }
+
+    body {
+        /*background: #EEE;*/
+        font-size:0.9em;
+    }
+
+    .invoice {
+        background: #FFF;
+        width: 970px !important;
+        margin: 50px auto;
+    }
+
+    .invoice .invoice-header {
+        padding: 25px 25px 15px;
+    }
+
+    .invoice .invoice-header h1 {
+        margin: 0;
+    }
+
+    .invoice .invoice-header .media .media-body {
+        font-size: 0.9em;
+        margin: 0;
+    }
+
+    .invoice .invoice-body {
+        border-radius: 10px;
+        padding: 25px;
+        background: #FFF;
+    }
+
+    .invoice .invoice-footer {
+        padding: 15px;
+        font-size: 0.9em;
+        text-align: center;
+        color: #999;
+    }
+
+    .panel {
+        margin-bottom: 20px;
+        background-color: #fff;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+        box-shadow: 0 1px 1px rgba(0, 0, 0, .05)
+    }
+
+    .panel-body {
+        padding: 15px
+    }
+
+    .panel-heading {
+        padding: 10px 15px;
+        border-bottom: 1px solid transparent;
+        border-top-left-radius: 3px;
+        border-top-right-radius: 3px;
+        background-color: #f5f5f5;
+    }
+
+    .panel-title {
+        margin-top: 0;
+        margin-bottom: 0;
+        font-size: 16px;
+        color: inherit
+    }
+
+    .panel-default {
+        border-color: #ddd
+    }
+
+    .table {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 10px;
+    }
+
+    th {
+        border-bottom: 1px solid #ddd;
+    }
+
+    .row {
+        display: flex;
+        align-items: center;
+    }
+
+    .row-box {
+        flex: 1;
+        border: #999;
+        padding: 15px;
+    }
+
+    .col {
+        position: relative;
+        min-height: 1px;
+        padding-right: 15px;
+        padding-left: 15px
+    }
+
+    .rowamount {
+        padding-top: 15px !important;
+    }
+
+    .rowtotal {
+        font-size: 1.3em;
+    }
+
+    .colfix {
+        width: 12%;
+    }
+
+    .list-unstyled {
+        padding-left: 0;
+        list-style: none
+    }
+
+    .mono {
+        font-family: monospace;
+        font-size: 1.3em;
+    }
+
+    .text-right {
+        text-align: right
+    }
+
+    .text-center {
+        text-align: center
+    }
+
+    .text-muted {
+        color: #999;
+    }
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Invoice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="invoice">
+        <div class="invoice-header">
+            <h1>Invoice</h1>
+            <h4 class="text-muted">Nº: {{.Series}}{{.Number}} | Date: {{.Date}}</h4>
+        </div>
+        <div class="invoice-body">
+            <!-- Customer / Issuer info -->
+            <div class="row">
+                <!-- Customer data -->
+                <div class="row-box">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Customer Details</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p>
+                                {{.Customer.Name}} <br>
+                                {{.Customer.TinNumber}}
+                                {{.Customer.Address}} <br>
+                                {{.Customer.City}} <br>
+                                {{.Customer.PostalCode}} <br>
+                                {{.Customer.Country}} <br>
+                                {{.Customer.Phone}} <br>
+                                {{.Customer.Email}} <br>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Issuer data -->
+                <div class="row-box">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Issuer</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p>
+                                {{.Issuer.Name}} <br>
+                                {{.Issuer.TinNumber}}
+                                {{.Issuer.Address}} <br>
+                                {{.Issuer.City}} <br>
+                                {{.Issuer.PostalCode}} <br>
+                                {{.Issuer.Country}} <br>
+                                {{.Issuer.Phone}} <br>
+                                {{.Issuer.Email}} <br>
+                            </p>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice table -->
+            <div class="panel panel-default" style="margin: 15px;">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Services / Products</h3>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Item / Details</th>
+                            <th class="text-center colfix">Unit Cost</th>
+                            <th class="text-center colfix">Sum Cost</th>
+                            <th class="text-center colfix">Discount</th>
+                            <th class="text-center colfix">Tax</th>
+                            <th class="text-center colfix">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{.Items}}
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel panel-default" style="margin: 15px;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="text-center col">Sub Total</th>
+                            <th class="text-center col">Discount</th>
+                            <th class="text-center col">Total</th>
+                            <th class="text-center col">Tax</th>
+                            <th class="text-center col">Final</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center rowtotal mono">{{.SubTotal}} {{.IsoCurrency}}</td>
+                            <td class="text-center rowtotal mono">-{{.Discount}} {{.IsoCurrency}}</td>
+                            <td class="text-center rowtotal mono">{{.Total}} {{.IsoCurrency}}</td>
+                            <td class="text-center rowtotal mono">{{.Tax}} {{.IsoCurrency}}</td>
+                            <td class="text-center rowtotal mono"><strong>{{.Final}} {{.IsoCurrency}}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="row">
+                <div class="row-box">
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <i>Notes</i>
+                            <hr style="margin:3px 0 5px" />
+                            {{.Notes}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row-box">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Payment Method</h3>
+                        </div>
+                        <div class="panel-body">
+                            {{.PayMethod}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer message -->
+        <div class="invoice-footer">
+            {{.Footer}}
+        </div>
+    </div>
+</body>
+
+</html>
