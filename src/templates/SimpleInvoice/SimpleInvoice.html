@@ -1,3 +1,4 @@
+{{define "invoice"}}
 <!DOCTYPE html>
 
 <html lang="en">
@@ -217,7 +218,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{.Items}}
+                        {{.ItemsRender}}
                     </tbody>
                 </table>
             </div>
@@ -275,3 +276,4 @@
 </body>
 
 </html>
+{{end}}

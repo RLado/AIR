@@ -1,0 +1,5 @@
+# Files
+*.sqlite*
+
+# Directories
+bin/
