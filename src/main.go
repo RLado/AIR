@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/rlado/air/setup"
 )
@@ -50,33 +51,38 @@ type itemRow struct {
 	TotalNote    string
 }
 
-type invoice interface {
-	render() *bytes.Buffer
+// invoice struct
+type invoice struct {
+	Id          int           `json:"id"`
+	Series      string        `json:"series"`
+	Number      int           `json:"number"`
+	Date        string        `json:"date"`
+	Customer    person        `json:"customer"`
+	Issuer      person        `json:"issuer"`
+	IsoCurrency string        `json:"iso_currency"`
+	Items       []itemRow     `json:"items"`
+	ItemsRender template.HTML `json:"items_render"`
+	SubTotal    float32       `json:"sub_total"`
+	Discount    float32       `json:"discount"`
+	Total       float32       `json:"total"`
+	Tax         float32       `json:"tax"`
+	Final       float32       `json:"final"`
+	Notes       string        `json:"notes"`
+	PayMethod   string        `json:"pay_method"`
+	Footer      string        `json:"footer"`
 }
 
-// Invoice struct
-type SimpleInvoice struct {
-	Id          int       `json:"id"`
-	Series      string    `json:"series"`
-	Number      int       `json:"number"`
-	Date        string    `json:"date"`
-	Customer    person    `json:"customer"`
-	Issuer      person    `json:"issuer"`
-	IsoCurrency string    `json:"iso_currency"`
-	Items       []itemRow `json:"items"`
-	ItemsRender template.HTML
-	SubTotal    float32 `json:"sub_total"`
-	Discount    float32 `json:"discount"`
-	Total       float32 `json:"total"`
-	Tax         float32 `json:"tax"`
-	Final       float32 `json:"final"`
-	Notes       string  `json:"notes"`
-	PayMethod   string  `json:"pay_method"`
-	Footer      string  `json:"footer"`
+// Issued invoice struct (summary table)
+type IssuedInvoice struct {
+	Id       int    `json:"id"`
+	Series   string `json:"series"`
+	Number   int    `json:"number"`
+	Date     string `json:"date"`
+	Customer person `json:"customer"`
 }
 
 // Render invoice
-func (inv SimpleInvoice) render() *bytes.Buffer {
+func (inv invoice) render() *bytes.Buffer {
 	// Render Items table
 	tableBuf := bytes.NewBuffer([]byte{})
 	tmplItem, err := template.New("itemTable").ParseFiles("templates/SimpleInvoice/ItemTable.html")
@@ -138,7 +144,8 @@ func createIssuer(db *sql.DB, state *int) {
 	issuer.Email = scanner.Text()
 
 	// Summary:
-	fmt.Printf(`Summary:
+	fmt.Printf(`
+--- Summary ---
 Name: %s
 TIN: %s
 Address: %s
@@ -150,6 +157,7 @@ Email: %s
 
 Is this information correct? (y/N):
 `, issuer.Name, issuer.TinNumber, issuer.Address, issuer.City, issuer.PostalCode, issuer.Country, issuer.Phone, issuer.Email)
+	usrInput = "N"
 	fmt.Scanln(&usrInput)
 	if usrInput == "y" {
 		// Save issuer data to database
@@ -253,7 +261,8 @@ func createCustomer(db *sql.DB, state *int) {
 	customer.Email = scanner.Text()
 
 	// Summary:
-	fmt.Printf(`Summary:
+	fmt.Printf(`
+--- Summary ---
 Name: %s
 TIN: %s
 Address: %s
@@ -265,6 +274,7 @@ Email: %s
 
 Is this information correct? (y/N):
 `, customer.Name, customer.TinNumber, customer.Address, customer.City, customer.PostalCode, customer.Country, customer.Phone, customer.Email)
+	usrInput = "N"
 	fmt.Scanln(&usrInput)
 	if usrInput == "y" {
 		// Save customer data to database
@@ -335,6 +345,245 @@ func deleteCustomer(db *sql.DB, state *int) {
 	*state = 000
 }
 
+// CLI for creating a new invoice
+func createInvoice(db *sql.DB, state *int) {
+	var usrInput string
+	var inv invoice
+
+	scanner := bufio.NewScanner(os.Stdin)
+
+	// Request invoice data
+	fmt.Print("Series: ")
+	scanner.Scan()
+	inv.Series = scanner.Text()
+
+	// Get invoice number
+	row := db.QueryRow("SELECT MAX(Number) FROM Invoices WHERE Series = ?", inv.Series)
+	row.Scan(&inv.Number)
+	inv.Number++
+
+	// Get date in DD/MM/YYYY format
+	inv.Date = time.Now().Format("02/01/2006")
+
+	// Get customer data and query the database
+	fmt.Print("Customer ID: ")
+	fmt.Scanf("%d", &inv.Customer.Id)
+	row = db.QueryRow("SELECT * FROM Customers WHERE Id = ?", inv.Customer.Id)
+	err := row.Scan(&inv.Customer.Id, &inv.Customer.Name, &inv.Customer.TinNumber, &inv.Customer.Address, &inv.Customer.City, &inv.Customer.PostalCode, &inv.Customer.Country, &inv.Customer.Phone, &inv.Customer.Email)
+	if err != nil {
+		fmt.Printf("Error querying customer data. This customer ID might not extist: %s\n", err)
+		*state = 000
+		return
+	}
+
+	// Get issuer data and query the database
+	fmt.Print("Issuer ID: ")
+	fmt.Scanf("%d", &inv.Issuer.Id)
+	row = db.QueryRow("SELECT * FROM User WHERE Id = ?", inv.Issuer.Id)
+	err = row.Scan(&inv.Id, &inv.Issuer.Name, &inv.Issuer.TinNumber, &inv.Issuer.Address, &inv.Issuer.City, &inv.Issuer.PostalCode, &inv.Issuer.Country, &inv.Issuer.Phone, &inv.Issuer.Email)
+	if err != nil {
+		fmt.Printf("Error querying issuer data. This issuer ID might not exist: %s\n", err)
+		*state = 000
+		return
+	}
+
+	// Get ISO currency code
+	fmt.Print("ISO Currency: ")
+	fmt.Scanf("%s", &inv.IsoCurrency)
+
+	// Get items
+	fmt.Println("Items: ")
+	for {
+		fmt.Println("--- New Item ---")
+		item := itemRow{}
+		fmt.Print("Concept: ")
+		scanner.Scan()
+		item.Concept = scanner.Text()
+		fmt.Print("Concept note: ")
+		scanner.Scan()
+		item.ConceptNote = scanner.Text()
+		fmt.Print("Unit cost: ")
+		fmt.Scanf("%f", &item.UnitCost)
+		fmt.Print("Unit cost note: ")
+		scanner.Scan()
+		item.UnitCostNote = scanner.Text()
+		fmt.Print("Number of units: ")
+		var units float32
+		fmt.Scanf("%f", &units)
+		fmt.Print("Sum cost note: ")
+		scanner.Scan()
+		item.SumCostNote = scanner.Text()
+		fmt.Print("Discount: ")
+		fmt.Scanf("%f", &item.Discount)
+		fmt.Print("Discount note: ")
+		scanner.Scan()
+		item.DiscountNote = scanner.Text()
+		fmt.Print("Tax (%): ")
+		fmt.Scanf("%f", &item.Tax)
+		fmt.Print("Tax note: ")
+		scanner.Scan()
+		item.TaxNote = scanner.Text()
+		fmt.Print("Total note: ")
+		scanner.Scan()
+		item.TotalNote = scanner.Text()
+
+		// Calculate total
+		item.SumCost = item.UnitCost * units
+		item.Total = item.SumCost - item.Discount + ((item.SumCost - item.Discount) * item.Tax / 100)
+
+		// Add currency code
+		item.IsoCurrency = inv.IsoCurrency
+
+		// Print item summary
+		fmt.Printf(`
+--- Summary ---
+Concept: %s : %s
+Unit cost: %f : %s
+Sum cost: %f : %s
+Discount: %f : %s
+Tax: %f : %s
+Total: %f : %s
+
+`, item.Concept, item.ConceptNote, item.UnitCost, item.UnitCostNote, item.SumCost, item.SumCostNote, item.Discount, item.DiscountNote, item.Tax, item.TaxNote, item.Total, item.TotalNote)
+
+		fmt.Print("Is this information correct? (y/N): ")
+		usrInput = "N"
+		fmt.Scanln(&usrInput)
+		if usrInput == "y" {
+			inv.Items = append(inv.Items, item)
+		} else {
+			fmt.Println("Item not added")
+			if len(inv.Items) == 0 {
+				continue
+			}
+		}
+
+		// Ask if the user wants to add another item
+		fmt.Print("Add another item? (y/N): ")
+		usrInput = "N"
+		fmt.Scanln(&usrInput)
+		if usrInput != "y" {
+			break
+		}
+	}
+
+	// Get Notes, Payment method and Footer
+	fmt.Print("Notes: ")
+	stop_flag := false
+	inputBuf := bytes.NewBuffer([]byte{})
+
+	for {
+		scanner.Scan()
+		lastInput := scanner.Text()
+
+		// Press enter on an empty line to finish
+		if lastInput == "" && stop_flag {
+			break
+		} else if lastInput == "" && !stop_flag {
+			stop_flag = true
+		} else {
+			stop_flag = false
+		}
+
+		inputBuf.WriteString(lastInput)
+		inputBuf.WriteString("\n")
+	}
+	inv.Notes = inputBuf.String()
+
+	fmt.Print("Payment method: ")
+	stop_flag = false
+	inputBuf = bytes.NewBuffer([]byte{})
+
+	for {
+		scanner.Scan()
+		lastInput := scanner.Text()
+
+		// Press enter on an empty line to finish
+		if lastInput == "" && stop_flag {
+			break
+		} else if lastInput == "" && !stop_flag {
+			stop_flag = true
+		} else {
+			stop_flag = false
+		}
+
+		inputBuf.WriteString(lastInput)
+		inputBuf.WriteString("\n")
+	}
+	inv.PayMethod = inputBuf.String()
+
+	fmt.Print("Footer: ")
+	scanner.Scan()
+	inv.Footer = scanner.Text()
+
+	// Summary
+	fmt.Printf(`
+--- Summary ---
+Invoice number: %s%d
+Date: %s
+Customer: %d - %s : %s : %s : %s : %s : %s : %s : %s
+Issuer: %d - %s : %s : %s : %s : %s : %s : %s : %s
+ISO Currency: %s
+Items: %v
+Subtotal: %f
+Discount: %f
+Tax: %f
+Total: %f
+Final: %f
+Notes: %s
+Payment method: %s
+Footer: %s
+
+`, inv.Series, inv.Number, inv.Date, inv.Customer.Id, inv.Customer.Name, inv.Customer.TinNumber, inv.Customer.Address, inv.Customer.City, inv.Customer.PostalCode, inv.Customer.Country, inv.Customer.Phone, inv.Customer.Email, inv.Issuer.Id, inv.Issuer.Name, inv.Issuer.TinNumber, inv.Issuer.Address, inv.Issuer.City, inv.Issuer.PostalCode, inv.Issuer.Country, inv.Issuer.Phone, inv.Issuer.Email, inv.IsoCurrency, inv.Items, inv.SubTotal, inv.Discount, inv.Tax, inv.Total, inv.Final, inv.Notes, inv.PayMethod, inv.Footer)
+	fmt.Print("Is this information correct? (y/N): ")
+	usrInput = "N"
+	fmt.Scanln(&usrInput)
+	if usrInput == "y" {
+		// Save invoice data to database
+		invJson, err := json.Marshal(inv)
+		if err != nil {
+			log.Fatalf("Error marshalling invoice data: %s", err)
+		}
+		_, err = db.Exec("INSERT INTO IssuedInvoices (Series, Number, CustomerId, Date, Data) VALUES (?, ?, ?, ?, ?)", inv.Series, inv.Number, inv.Customer.Id, inv.Date, string(invJson))
+		if err != nil {
+			log.Fatalf("Error saving invoice data to database: %s", err)
+		}
+		fmt.Println("Invoice data saved successfully")
+	} else {
+		fmt.Println("Invoice data not saved")
+	}
+
+	// Go back to main menu
+	*state = 000
+}
+
+// CLI for listing invoices from the database
+func listInvoice(db *sql.DB, state *int) {
+	rows, err := db.Query("SELECT Id, Series, Number, CustomerId, Date FROM IssuedInvoices")
+	if err != nil {
+		log.Fatalf("Error querying invoice data: %s", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var inv_data IssuedInvoice
+		err = rows.Scan(&inv_data.Id, &inv_data.Series, &inv_data.Number, &inv_data.Customer.Id, &inv_data.Date)
+		if err != nil {
+			log.Fatalf("Error scanning invoice data: %s", err)
+		}
+		// Get customer data
+		row := db.QueryRow("SELECT Name FROM Customers WHERE Id = ?", inv_data.Customer.Id)
+		err = row.Scan(&inv_data.Customer.Name)
+		if err != nil {
+			log.Fatalf("Error querying customer data: %s", err)
+		}
+		fmt.Printf("%d - %s%06d : %s : %s\n", inv_data.Id, inv_data.Series, inv_data.Number, inv_data.Date, inv_data.Customer.Name)
+	}
+
+	// Go back to main menu
+	*state = 000
+}
+
 // Command line interface
 func cli(db *sql.DB) {
 	var state int
@@ -359,7 +608,6 @@ Please select an option:
   
   201 - Create new invoice
   202 - List existing invoice
-  203 - Delete existing invoice
   
   999 - Quit`)
 			fmt.Print("> ")
@@ -383,10 +631,9 @@ Please select an option:
 
 		// Invoice info 2xx
 		case 201: // Create new invoice
-
+			createInvoice(db, &state)
 		case 202: // List existing invoice
-
-		case 203: // Delete existing invoice
+			listInvoice(db, &state)
 
 		// Quit
 		case 999: // Quit
@@ -409,7 +656,7 @@ func webServer(db *sql.DB) {
 		// Look for the requested invoice id
 		var inv invoice
 		var inv_data string
-		row := db.QueryRow("SELECT * FROM Invoices WHERE Id = ?", page)
+		row := db.QueryRow("SELECT Data FROM IssuedInvoices WHERE Id = ?", page)
 		err := row.Scan(&inv_data)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)

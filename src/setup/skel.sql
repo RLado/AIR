@@ -4,7 +4,7 @@ PRAGMA foreign_keys = ON;
 
 DROP TABLE IF EXISTS "User";
 CREATE TABLE IF NOT EXISTS "User" (
-	"Id" INTEGER,
+	"Id" INTEGER NOT NULL,
     "Name" TEXT NOT NULL,
     "TinNumber" TEXT NOT NULL,
     "Address" TEXT NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS "User" (
 
 DROP TABLE IF EXISTS "Customers";
 CREATE TABLE IF NOT EXISTS "Customers" (
-	"Id" INTEGER,
+	"Id" INTEGER NOT NULL,
     "Name" TEXT NOT NULL,
     "TinNumber" TEXT NOT NULL,
     "Address" TEXT NOT NULL,
@@ -32,11 +32,13 @@ CREATE TABLE IF NOT EXISTS "Customers" (
 
 DROP TABLE IF EXISTS "IssuedInvoices";
 CREATE TABLE IF NOT EXISTS "IssuedInvoices" (
-    "Id" INTEGER,
-    "Number" TEXT NOT NULL UNIQUE,
+    "Id" INTEGER NOT NULL,
+    "Series" TEXT NOT NULL,
+    "Number" INT NOT NULL,
+    "CustomerId" INTEGER NOT NULL,
     "Date" INTEGER NOT NULL,
     "Data" TEXT NOT NULL,
-    "Result" TEXT NOT NULL,
     PRIMARY KEY("Id" AUTOINCREMENT)
+    FOREIGN KEY("CustomerId") REFERENCES "Customers"("Id")
 );
 CREATE INDEX IF NOT EXISTS "IssuedInvoices_Number" ON "IssuedInvoices" ("Number");
