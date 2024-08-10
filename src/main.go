@@ -53,7 +53,7 @@ type itemRow struct {
 	TotalNote    string
 }
 
-// invoice struct
+// Invoice struct
 type invoice struct {
 	Id          int           `json:"id"`
 	Series      string        `json:"series"`
@@ -75,7 +75,7 @@ type invoice struct {
 }
 
 // Issued invoice struct (summary table)
-type IssuedInvoice struct {
+type issuedInvoice struct {
 	Id       int    `json:"id"`
 	Series   string `json:"series"`
 	Number   int    `json:"number"`
@@ -570,7 +570,7 @@ func listInvoice(db *sql.DB, port int, state *int) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var inv_data IssuedInvoice
+		var inv_data issuedInvoice
 		err = rows.Scan(&inv_data.Id, &inv_data.Series, &inv_data.Number, &inv_data.Customer.Id, &inv_data.Date)
 		if err != nil {
 			log.Fatalf("Error scanning invoice data: %s", err)
