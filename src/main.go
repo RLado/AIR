@@ -362,7 +362,7 @@ func createInvoice(db *sql.DB, state *int) {
 	// Get invoice number
 	row := db.QueryRow("SELECT MAX(Number) FROM Invoices WHERE Series = ?", inv.Series)
 	row.Scan(&inv.Number)
-	inv.Number++
+	inv.Number += 1
 
 	// Get date in DD/MM/YYYY format
 	inv.Date = time.Now().Format("02/01/2006")
