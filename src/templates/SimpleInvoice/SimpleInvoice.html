@@ -153,7 +153,7 @@
     <div class="invoice">
         <div class="invoice-header">
             <h1>Invoice</h1>
-            <h4 class="text-muted">Nº: {{.Series}}{{.Number}} | Date: {{.Date}}</h4>
+            <h4 class="text-muted">Nº: {{.Series}}{{printf "%06d" .Number}} | Date: {{.Date}}</h4>
         </div>
         <div class="invoice-body">
             <!-- Customer / Issuer info -->
@@ -170,7 +170,7 @@
                                 {{.Customer.TinNumber}}
                                 {{.Customer.Address}} <br>
                                 {{.Customer.City}} <br>
-                                {{.Customer.PostalCode}} <br>
+                                {{.Customer.PostalCode}}
                                 {{.Customer.Country}} <br>
                                 {{.Customer.Phone}} <br>
                                 {{.Customer.Email}} <br>
@@ -190,7 +190,7 @@
                                 {{.Issuer.TinNumber}}
                                 {{.Issuer.Address}} <br>
                                 {{.Issuer.City}} <br>
-                                {{.Issuer.PostalCode}} <br>
+                                {{.Issuer.PostalCode}}
                                 {{.Issuer.Country}} <br>
                                 {{.Issuer.Phone}} <br>
                                 {{.Issuer.Email}} <br>
@@ -235,11 +235,11 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="text-center rowtotal mono">{{.SubTotal}} {{.IsoCurrency}}</td>
-                            <td class="text-center rowtotal mono">-{{.Discount}} {{.IsoCurrency}}</td>
-                            <td class="text-center rowtotal mono">{{.Total}} {{.IsoCurrency}}</td>
-                            <td class="text-center rowtotal mono">{{.Tax}} {{.IsoCurrency}}</td>
-                            <td class="text-center rowtotal mono"><strong>{{.Final}} {{.IsoCurrency}}</strong></td>
+                            <td class="text-center rowtotal mono">{{printf "%.2f" .SubTotal}} {{.IsoCurrency}}</td>
+                            <td class="text-center rowtotal mono">-{{printf "%.2f" .Discount}} {{.IsoCurrency}}</td>
+                            <td class="text-center rowtotal mono">{{printf "%.2f" .Total}} {{.IsoCurrency}}</td>
+                            <td class="text-center rowtotal mono">{{printf "%.2f" .Tax}} {{.IsoCurrency}}</td>
+                            <td class="text-center rowtotal mono"><strong>{{printf "%.2f" .Final}} {{.IsoCurrency}}</strong></td>
                         </tr>
                     </tbody>
                 </table>

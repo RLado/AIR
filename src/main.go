@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/rlado/air/setup"
@@ -19,6 +20,7 @@ import (
 // Config struct
 type config struct {
 	DbPath string `json:"db_path"`
+	Port   int    `json:"port"`
 }
 
 // Person struct
@@ -67,8 +69,8 @@ type invoice struct {
 	Total       float32       `json:"total"`
 	Tax         float32       `json:"tax"`
 	Final       float32       `json:"final"`
-	Notes       string        `json:"notes"`
-	PayMethod   string        `json:"pay_method"`
+	Notes       template.HTML `json:"notes"`
+	PayMethod   template.HTML `json:"pay_method"`
 	Footer      string        `json:"footer"`
 }
 
@@ -176,7 +178,7 @@ Is this information correct? (y/N):
 
 // CLI for listing issuer data from the database
 func listIssuer(db *sql.DB, state *int) {
-	rows, err := db.Query("SELECT * FROM User")
+	rows, err := db.Query("SELECT * FROM User ORDER BY Id DESC")
 	if err != nil {
 		log.Fatalf("Error querying issuer data: %s", err)
 	}
@@ -293,7 +295,7 @@ Is this information correct? (y/N):
 
 // CLI for listing customer data from the database
 func listCustomer(db *sql.DB, state *int) {
-	rows, err := db.Query("SELECT * FROM Customers")
+	rows, err := db.Query("SELECT * FROM Customers ORDER BY Id DESC")
 	if err != nil {
 		log.Fatalf("Error querying customer data: %s", err)
 	}
@@ -488,7 +490,8 @@ Total: %f : %s
 		inputBuf.WriteString(lastInput)
 		inputBuf.WriteString("\n")
 	}
-	inv.Notes = inputBuf.String()
+	notes := inputBuf.String()
+	inv.Notes = template.HTML(strings.Replace(notes, "\n", "<br>", -1))
 
 	fmt.Print("Payment method: ")
 	stop_flag = false
@@ -510,7 +513,8 @@ Total: %f : %s
 		inputBuf.WriteString(lastInput)
 		inputBuf.WriteString("\n")
 	}
-	inv.PayMethod = inputBuf.String()
+	payMethod := inputBuf.String()
+	inv.PayMethod = template.HTML(strings.Replace(payMethod, "\n", "<br>", -1))
 
 	fmt.Print("Footer: ")
 	scanner.Scan()
@@ -558,8 +562,8 @@ Footer: %s
 }
 
 // CLI for listing invoices from the database
-func listInvoice(db *sql.DB, state *int) {
-	rows, err := db.Query("SELECT Id, Series, Number, CustomerId, Date FROM IssuedInvoices")
+func listInvoice(db *sql.DB, port int, state *int) {
+	rows, err := db.Query("SELECT Id, Series, Number, CustomerId, Date FROM IssuedInvoices ORDER BY Id DESC")
 	if err != nil {
 		log.Fatalf("Error querying invoice data: %s", err)
 	}
@@ -577,7 +581,7 @@ func listInvoice(db *sql.DB, state *int) {
 		if err != nil {
 			log.Fatalf("Error querying customer data: %s", err)
 		}
-		fmt.Printf("%d - %s%06d : %s : %s\n", inv_data.Id, inv_data.Series, inv_data.Number, inv_data.Date, inv_data.Customer.Name)
+		fmt.Printf("%d - %s%06d : %s : %s | View: %s:%d/render/%d\n", inv_data.Id, inv_data.Series, inv_data.Number, inv_data.Date, inv_data.Customer.Name, "http://localhost", port, inv_data.Id)
 	}
 
 	// Go back to main menu
@@ -585,7 +589,7 @@ func listInvoice(db *sql.DB, state *int) {
 }
 
 // Command line interface
-func cli(db *sql.DB) {
+func cli(db *sql.DB, port int) {
 	var state int
 
 	// Main CLI loop
@@ -633,7 +637,7 @@ Please select an option:
 		case 201: // Create new invoice
 			createInvoice(db, &state)
 		case 202: // List existing invoice
-			listInvoice(db, &state)
+			listInvoice(db, port, &state)
 
 		// Quit
 		case 999: // Quit
@@ -643,7 +647,7 @@ Please select an option:
 }
 
 // Web server to show rendered invoices
-func webServer(db *sql.DB) {
+func webServer(db *sql.DB, port int) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		http.ServeFile(w, r, "static/index.html")
@@ -651,7 +655,7 @@ func webServer(db *sql.DB) {
 
 	http.HandleFunc("/render/{page}", func(w http.ResponseWriter, r *http.Request) {
 		page := r.PathValue("page")
-		log.Printf("Request received: %s", page)
+		//log.Printf("Request received: %s", page)
 
 		// Look for the requested invoice id
 		var inv invoice
@@ -677,7 +681,7 @@ func webServer(db *sql.DB) {
 		w.Write(inv.render().Bytes())
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 func main() {
@@ -723,7 +727,7 @@ func main() {
 	}
 
 	// Run the web server
-	go webServer(db)
+	go webServer(db, conf.Port)
 
 	// Run the command line interface
 	fmt.Println(`
@@ -738,6 +742,6 @@ d88P     888 8888888 888   T88b
 
 
 Welcome to Air!`)
-	cli(db)
+	cli(db, conf.Port)
 
 }

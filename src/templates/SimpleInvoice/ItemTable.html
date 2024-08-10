@@ -6,27 +6,27 @@
         <small class="text-muted">{{.ConceptNote}}</small>
     </td>
     <td class="text-right">
-        <span class="mono">{{.UnitCost}} {{.IsoCurrency}}</span>
+        <span class="mono">{{printf "%.2f" .UnitCost}} {{.IsoCurrency}}</span>
         <br>
         <small class="text-muted">{{.UnitCostNote}}</small>
     </td>
     <td class="text-right">
-        <span class="mono">{{.SumCost}} {{.IsoCurrency}}</span>
+        <span class="mono">{{printf "%.2f" .SumCost}} {{.IsoCurrency}}</span>
         <br>
         <small class="text-muted">{{.SumCostNote}}</small>
     </td>
     <td class="text-right">
-        <span class="mono">-{{.Discount}} {{.IsoCurrency}}</span>
+        <span class="mono">-{{printf "%.2f" .Discount}} {{.IsoCurrency}}</span>
         <br>
         <small class="text-muted">{{.DiscountNote}}</small>
     </td>
     <td class="text-right">
-        <span class="mono">+{{.Tax}} {{.IsoCurrency}}</span>
+        <span class="mono">+{{printf "%.2f" .Tax}} {{.IsoCurrency}}</span>
         <br>
         <small class="text-muted">{{.TaxNote}}</small>
     </td>
     <td class="text-right">
-        <strong class="mono">{{.Total}} {{.IsoCurrency}}</strong>
+        <strong class="mono">{{printf "%.2f" .Total}} {{.IsoCurrency}}</strong>
         <br>
         <small class="text-muted mono">{{.TotalNote}}</small>
     </td>
