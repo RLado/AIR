@@ -360,9 +360,12 @@ func createInvoice(db *sql.DB, state *int) {
 	inv.Series = scanner.Text()
 
 	// Get invoice number
-	row := db.QueryRow("SELECT MAX(Number) FROM Invoices WHERE Series = ?", inv.Series)
-	row.Scan(&inv.Number)
-	inv.Number += 1
+	row := db.QueryRow("SELECT MAX(Number) FROM IssuedInvoices WHERE Series = ?", inv.Series)
+	err := row.Scan(&inv.Number)
+	if err != nil {
+		fmt.Printf("Creating new series: %s\n", inv.Series)
+	}
+	inv.Number++
 
 	// Get date in DD/MM/YYYY format
 	inv.Date = time.Now().Format("02/01/2006")
@@ -371,7 +374,7 @@ func createInvoice(db *sql.DB, state *int) {
 	fmt.Print("Customer ID: ")
 	fmt.Scanf("%d", &inv.Customer.Id)
 	row = db.QueryRow("SELECT * FROM Customers WHERE Id = ?", inv.Customer.Id)
-	err := row.Scan(&inv.Customer.Id, &inv.Customer.Name, &inv.Customer.TinNumber, &inv.Customer.Address, &inv.Customer.City, &inv.Customer.PostalCode, &inv.Customer.Country, &inv.Customer.Phone, &inv.Customer.Email)
+	err = row.Scan(&inv.Customer.Id, &inv.Customer.Name, &inv.Customer.TinNumber, &inv.Customer.Address, &inv.Customer.City, &inv.Customer.PostalCode, &inv.Customer.Country, &inv.Customer.Phone, &inv.Customer.Email)
 	if err != nil {
 		fmt.Printf("Error querying customer data. This customer ID might not extist: %s\n", err)
 		*state = 000
