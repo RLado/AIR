@@ -436,6 +436,7 @@ func createInvoice(db *sql.DB, state *int) {
 
 		// Calculate total
 		item.SumCost = item.UnitCost * units
+		item.Tax = ((item.SumCost - item.Discount) * item.Tax / 100)
 		item.Total = item.SumCost - item.Discount + ((item.SumCost - item.Discount) * item.Tax / 100)
 
 		// Add currency code
