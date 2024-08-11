@@ -11,12 +11,10 @@ clean:
 
 package: build
 	@mkdir -p ${DESTDIR}/bin
-	@mkdir -p ${DESTDIR}/templates
-	@mkdir -p ${DESTDIR}/static
 	@mkdir -p ${DESTDIR}/config
 
 	@cp LICENSE ${DESTDIR}
 	@mv ${BINARY_NAME} ${DESTDIR}/bin
-	@cp -r src/templates ${DESTDIR}
-	@cp -r src/static ${DESTDIR}
+	@cp -r src/templates ${DESTDIR}/bin
+	@cp -r src/static ${DESTDIR}/bin
 	@cp -r config ${DESTDIR}
