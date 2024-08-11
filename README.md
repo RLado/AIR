@@ -48,6 +48,25 @@ Please select an option:
 > 
 ```
 
-#### Rendered Invoice
+#### Example invoice
 
 ![ExampleInvoice](https://github.com/user-attachments/assets/6e1b9d40-077e-4e0b-ad4a-24274e9c5fbe)
+
+### Installation
+
+Build or [download](https://github.com/RLado/Air/releases) a package for your platform:
+
+Build:
+```bash
+make package # Optionally specify 'DESTDIR' to change the output directory
+```
+
+Then run the executable initiallizing the database:
+```bash
+./air -i
+```
+
+After that, you can run the application normally:
+```bash
+./air
+```
