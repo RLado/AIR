@@ -15,7 +15,8 @@ package: build
 	@mkdir -p ${DESTDIR}/static
 	@mkdir -p ${DESTDIR}/config
 
+	@cp LICENSE ${DESTDIR}
 	@mv ${BINARY_NAME} ${DESTDIR}/bin
-	@cp -r src/templates ${DESTDIR}/templates
-	@cp -r src/static ${DESTDIR}/static
-	@cp -r config ${DESTDIR}/config
+	@cp -r src/templates ${DESTDIR}
+	@cp -r src/static ${DESTDIR}
+	@cp -r config ${DESTDIR}
