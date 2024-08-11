@@ -17,6 +17,8 @@ import (
 	"github.com/rlado/air/setup"
 )
 
+var VERSION = "0.1.0"
+
 // Config struct
 type config struct {
 	DbPath string `json:"db_path"`
@@ -190,7 +192,7 @@ func listIssuer(db *sql.DB, state *int) {
 		if err != nil {
 			log.Fatalf("Error scanning issuer data: %s", err)
 		}
-		fmt.Printf("%d - %s : %s : %s : %s : %s : %s : %s : %s", issuer.Id, issuer.Name, issuer.TinNumber, issuer.Address, issuer.City, issuer.PostalCode, issuer.Country, issuer.Phone, issuer.Email)
+		fmt.Printf("%d - %s : %s : %s : %s : %s : %s : %s : %s\n", issuer.Id, issuer.Name, issuer.TinNumber, issuer.Address, issuer.City, issuer.PostalCode, issuer.Country, issuer.Phone, issuer.Email)
 	}
 
 	// Go back to main menu
@@ -213,13 +215,13 @@ func deleteIssuer(db *sql.DB, state *int) {
 		return
 	}
 
-	fmt.Printf("%d - %s : %s : %s : %s : %s : %s : %s : %s", issuer.Id, issuer.Name, issuer.TinNumber, issuer.Address, issuer.City, issuer.PostalCode, issuer.Country, issuer.Phone, issuer.Email)
+	fmt.Printf("%d - %s : %s : %s : %s : %s : %s : %s : %s\n", issuer.Id, issuer.Name, issuer.TinNumber, issuer.Address, issuer.City, issuer.PostalCode, issuer.Country, issuer.Phone, issuer.Email)
 	fmt.Println("Are you sure you want to delete the following issuer data? (y/N)")
 	fmt.Scanln(&usrInput)
 	if usrInput == "y" {
 		_, err := db.Exec("DELETE FROM User WHERE Id = ?", issuer.Id)
 		if err != nil {
-			log.Fatalf("Error deleting issuer data: %s", err)
+			fmt.Println("Error: This issuer does not exist or has associated invoices")
 		}
 		fmt.Println("Issuer data deleted successfully")
 	} else {
@@ -307,7 +309,7 @@ func listCustomer(db *sql.DB, state *int) {
 		if err != nil {
 			log.Fatalf("Error scanning customer data: %s", err)
 		}
-		fmt.Printf("%d - %s : %s : %s : %s : %s : %s : %s : %s", customer.Id, customer.Name, customer.TinNumber, customer.Address, customer.City, customer.PostalCode, customer.Country, customer.Phone, customer.Email)
+		fmt.Printf("%d - %s : %s : %s : %s : %s : %s : %s : %s\n", customer.Id, customer.Name, customer.TinNumber, customer.Address, customer.City, customer.PostalCode, customer.Country, customer.Phone, customer.Email)
 	}
 
 	// Go back to main menu
@@ -322,7 +324,7 @@ func deleteCustomer(db *sql.DB, state *int) {
 	fmt.Println("Enter the ID of the customer you want to delete:")
 	fmt.Scanln(&usrInput)
 
-	row := db.QueryRow("SELECT * FROM User WHERE Id = ?", usrInput)
+	row := db.QueryRow("SELECT * FROM Customers WHERE Id = ?", usrInput)
 	err := row.Scan(&customer.Id, &customer.Name, &customer.TinNumber, &customer.Address, &customer.City, &customer.PostalCode, &customer.Country, &customer.Phone, &customer.Email)
 	if err != nil {
 		fmt.Println("Customer not found.")
@@ -330,13 +332,13 @@ func deleteCustomer(db *sql.DB, state *int) {
 		return
 	}
 
-	fmt.Printf("%d - %s : %s : %s : %s : %s : %s : %s : %s", customer.Id, customer.Name, customer.TinNumber, customer.Address, customer.City, customer.PostalCode, customer.Country, customer.Phone, customer.Email)
+	fmt.Printf("%d - %s : %s : %s : %s : %s : %s : %s : %s\n", customer.Id, customer.Name, customer.TinNumber, customer.Address, customer.City, customer.PostalCode, customer.Country, customer.Phone, customer.Email)
 	fmt.Println("Are you sure you want to delete the following customer data? (y/N)")
 	fmt.Scanln(&usrInput)
 	if usrInput == "y" {
-		_, err := db.Exec("DELETE FROM User WHERE Id = ?", customer.Id)
+		_, err := db.Exec("DELETE FROM Customers WHERE Id = ?", customer.Id)
 		if err != nil {
-			log.Fatalf("Error deleting customer data: %s", err)
+			fmt.Println("Error: This customer does not exist or has associated invoices")
 		}
 		fmt.Println("Customer data deleted successfully.")
 	} else {
@@ -733,7 +735,7 @@ func main() {
 	go webServer(db, conf.Port)
 
 	// Run the command line interface
-	fmt.Println(`
+	fmt.Printf(`
        d8888 8888888 8888888b.  
       d88888   888   888   Y88b 
      d88P888   888   888    888 
@@ -744,7 +746,10 @@ func main() {
 d88P     888 8888888 888   T88b 
 
 
-Welcome to Air!`)
+Welcome to Air!
+Version: %s 
+`, VERSION)
+
 	cli(db, conf.Port)
 
 }
