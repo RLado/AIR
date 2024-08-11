@@ -94,6 +94,14 @@ func (inv invoice) render() *bytes.Buffer {
 		log.Fatalf("Error parsing item template: %s", err)
 	}
 	for _, item := range inv.Items {
+		// Calculate totals
+		inv.SubTotal += item.SumCost
+		inv.Discount += item.Discount
+		inv.Tax += item.Tax
+		inv.Total += item.SumCost - item.Discount
+		inv.Final += item.Total
+
+		// Render item
 		err = tmplItem.Execute(tableBuf, item)
 		if err != nil {
 			log.Fatalf("Error executing item template: %s", err)
