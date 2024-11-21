@@ -756,7 +756,7 @@ func main() {
 d88P     888 8888888 888   T88b 
 
 
-Welcome to Air!
+Welcome to AIR!
 Version: %s 
 `, VERSION)
 
