@@ -1,9 +1,9 @@
-# Air Invoicing
+# AIR: Atomic Invoice Renderer
 ## Simple and free invoicing for freelancers
 
 > ⚠️ Check your local laws and regulations to ensure that you are compliant with invoicing requirements
 
-Air Invoicing is a simple and free invoicing tool for freelancers, designed to create invoices quickly and easily with an extensible template system.
+AIR Invoicing is a simple and free invoicing tool for freelancers, designed to create invoices quickly and easily with an extensible template system.
 
 ### Features
 - Save user data
@@ -26,7 +26,7 @@ Air Invoicing is a simple and free invoicing tool for freelancers, designed to c
 d88P     888 8888888 888   T88b 
 
 
-Welcome to Air!
+Welcome to AIR!
 Version: 0.1.0 
 
 
